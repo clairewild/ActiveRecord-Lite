@@ -2,7 +2,6 @@ require_relative '02_searchable'
 require 'active_support/inflector'
 require 'byebug'
 
-# Phase IIIa
 class AssocOptions
   attr_accessor(
     :foreign_key,
@@ -22,10 +21,10 @@ end
 class BelongsToOptions < AssocOptions
   def initialize(name, options = {})
     @primary_key = :id
-    @foreign_key = "#{name.to_s}_id".to_sym
+    @foreign_key = "#{name}_id".to_sym
     @class_name = name.to_s.camelcase
     options.each do |key, val|
-      instance_variable_set("@#{key.to_s}", val)
+      self.send("#{key}=", val)
     end
   end
 end
@@ -36,15 +35,16 @@ class HasManyOptions < AssocOptions
     @foreign_key = "#{self_class_name.underscore}_id".to_sym
     @class_name = name.to_s.singularize.camelcase
     options.each do |key, val|
-      instance_variable_set("@#{key.to_s}", val)
+      self.send("#{key}=", val)
     end
   end
 end
 
 module Associatable
-  # Phase IIIb
   def belongs_to(name, options = {})
     options = BelongsToOptions.new(name, options)
+    self.assoc_options[name] = options
+
     define_method(name) do
       id = options.primary_key
       foreign_key = self.send(options.foreign_key)
@@ -58,6 +58,8 @@ module Associatable
 
   def has_many(name, options = {})
     options = HasManyOptions.new(name, self.to_s, options)
+    self.assoc_options[name] = options
+
     define_method(name) do
       id = self.send(options.primary_key)
       foreign_key = options.foreign_key
@@ -67,7 +69,8 @@ module Associatable
   end
 
   def assoc_options
-    # Wait to implement this in Phase IVa. Modify `belongs_to`, too.
+    @assoc_options ||= {}
+    @assoc_options
   end
 end
 

@@ -3,11 +3,10 @@ require 'active_support/inflector'
 require 'byebug'
 
 class SQLObject
-
   def self.columns
     if @columns.nil?
       cols = DBConnection.execute2("SELECT * FROM #{table_name}")
-      @columns = cols[0].map { |col_name| col_name.to_sym } 
+      @columns = cols[0].map { |col_name| col_name.to_sym }
     end
     @columns
   end
@@ -66,13 +65,13 @@ class SQLObject
 
   def insert
     cols = self.class.columns
-    q_marks = (["?"] * cols.length).join(", ") 
+    q_marks = (["?"] * cols.length).join(", ")
     col_names = cols.join(", ")
 
     DBConnection.execute(<<-SQL, *attribute_values)
-      INSERT INTO 
-        #{self.class.table_name} (#{col_names}) 
-      VALUES 
+      INSERT INTO
+        #{self.class.table_name} (#{col_names})
+      VALUES
         (#{q_marks})
     SQL
     self.id = DBConnection.last_insert_row_id
@@ -84,7 +83,7 @@ class SQLObject
     DBConnection.execute(<<-SQL, *attribute_values, id)
       UPDATE
         #{self.class.table_name}
-      SET 
+      SET
         #{set_line}
       WHERE
         id = ?
